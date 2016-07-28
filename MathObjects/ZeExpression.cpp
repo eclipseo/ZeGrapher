@@ -18,13 +18,25 @@
 **
 ****************************************************************************/
 
+#include "MathObjects/ZeExpression.h"
+
+static double tenPower(double x)
+{
+     return pow(10, x);
+}
+
+ZeExpression::ZeExpression(ZeSet *set) :  mathObjects(set)
+{    
+
+}
+
+ZeExpression::ZeExpression(QString expr, ZeSet *set) : expression(expr), mathObjects(set)
+{
+    checkExpression();
+}
 
 
-
-
-#include "Calculus/treecreator.h"
-
-TreeCreator::TreeCreator(short callingObjectType)
+ZeExpression::ZeExpression(short callingObjectType)
 {
     funcType = callingObjectType;
 
@@ -51,7 +63,7 @@ TreeCreator::TreeCreator(short callingObjectType)
     refreshAuthorizedVars();
 }
 
-void TreeCreator::refreshAuthorizedVars()
+void ZeExpression::refreshAuthorizedVars()
 {
     if(funcType == FUNCTION)
     {
@@ -71,9 +83,9 @@ void TreeCreator::refreshAuthorizedVars()
     }
 }
 
-FastTree* TreeCreator::getTreeFromExpr(QString expr, bool &ok, QStringList additionnalVars)
-{    
-    FastTree *tree = NULL;
+ZeTree* ZeExpression::getTreeFromExpr(QString expr, bool &ok, QStringList additionnalVars)
+{
+    ZeTree *tree = NULL;
 
     customVars = additionnalVars;
 
@@ -81,25 +93,25 @@ FastTree* TreeCreator::getTreeFromExpr(QString expr, bool &ok, QStringList addit
     ok = check(expr);
 
     if(ok)
-        tree = createFastTree(decompTypes.size()-1, 0);
+        tree = createZeTree(decompTypes.size()-1, 0);
 
     return tree;
 }
 
-void TreeCreator::allow_k(bool state)
+void ZeExpression::allow_k(bool state)
 {
     authorizedVars[3] = state;
 }
 
-void TreeCreator::insertMultiplySigns(QString &formula)
+void ZeExpression::insertMultiplySigns(QString &formula)
 {
     for(int i = 0 ; i < formula.size()-1; i++)
     {
         if((formula[i].isDigit() && formula[i+1].isLetter()) ||
                 (formula[i].isLetter() && formula[i+1].isDigit()) ||
                 (formula[i].isDigit() && formula[i+1] == '(') ||
-                (formula[i] == ')' && formula[i+1] == '(') ||               
-                (formula[i] == ')' && (formula[i+1].isDigit() || formula[i+1].isLetter())) ||                
+                (formula[i] == ')' && formula[i+1] == '(') ||
+                (formula[i] == ')' && (formula[i+1].isDigit() || formula[i+1].isLetter())) ||
                 (i != 0 && !formula[i-1].isLetter() && vars.contains(QString(formula[i])) && formula[i+1] == '('))
         {
             formula.insert(i+1, QString("*"));
@@ -113,7 +125,7 @@ void TreeCreator::insertMultiplySigns(QString &formula)
     }
 }
 
-QList<int> TreeCreator::getCalledFuncs(QString expr)
+QList<int> ZeExpression::getCalledFuncs(QString expr)
 {
     QList<int> calledFuncs;
 
@@ -148,7 +160,7 @@ QList<int> TreeCreator::getCalledFuncs(QString expr)
     return calledFuncs;
 }
 
-QList<int> TreeCreator::getCalledSeqs(QString expr)
+QList<int> ZeExpression::getCalledSeqs(QString expr)
 {
     QList<int> calledSeqs;
 
@@ -182,7 +194,26 @@ QList<int> TreeCreator::getCalledSeqs(QString expr)
     return calledSeqs;
 }
 
-bool TreeCreator::check(QString formula)
+QStringList ZeExpression::splitExpression(QString expr)
+{
+    QList<QChar> ops << '+' << '-' << '/' << '*' << '^' << '(' << ')';
+    QStringList split;
+
+    int start = 0;
+
+    for(int end = 0 ; i < expr.size() ; i++)
+    {
+        if(ops.contains(expr[i]))
+        {
+            split << expr.mid(start, end - start + 1);
+            start = end + 1;
+        }
+    }
+
+    return split;
+}
+
+bool ZeExpression::check(QString formula)
 {
     formula.remove(' ');
     formula.replace("²", "^2");
@@ -192,6 +223,8 @@ bool TreeCreator::check(QString formula)
 
     if(formula.isEmpty())
         return false;
+
+    QStringList split = splitExpression(formula);
 
     bool digit = true, openingParenthesis = true, numberSign = true, varOrFunc = true, canEnd = false,
          ope = false, closingParenthesis = false;
@@ -240,7 +273,7 @@ bool TreeCreator::check(QString formula)
             if(i != formula.size() && formula[i+1] == '\'')
                 i++;
 
-            int numLetters = i - letterPosStart + 1;           
+            int numLetters = i - letterPosStart + 1;
 
             QString name = formula.mid(letterPosStart, numLetters);
 
@@ -301,14 +334,14 @@ bool TreeCreator::check(QString formula)
                     decompTypes << vars.indexOf(name) + VARS_START + 1;
                     decompPriorites << VAR;
                     decompValues << 0.0;
-                }                           
+                }
 
                 else return false;
             }
 
             else return false;
 
-        }       
+        }
         else if(operators.contains(formula[i]) && ope)
         {
             short pos = operators.indexOf(formula[i]);
@@ -321,7 +354,7 @@ bool TreeCreator::check(QString formula)
             ope = numberSign = closingParenthesis = canEnd = false;
         }
         else if(formula[i]=='(' && openingParenthesis)
-        {           
+        {
             pth++;
 
             decompTypes << PTHO ;
@@ -332,7 +365,7 @@ bool TreeCreator::check(QString formula)
             ope = closingParenthesis = canEnd = false;
         }
         else if(formula[i]==')' && closingParenthesis && pth > 0)
-        {            
+        {
             pth--;
 
             decompTypes << PTHF ;
@@ -342,16 +375,16 @@ bool TreeCreator::check(QString formula)
             ope = closingParenthesis = canEnd = true;
             digit = numberSign = openingParenthesis = varOrFunc = false;
 
-        }        
+        }
         else return false;
     }
 
     return pth == 0 && canEnd;
 }
 
-FastTree* TreeCreator::createFastTree(int debut, int fin)
+ZeTree* ZeExpression::createZeTree(int debut, int fin)
 {
-    FastTree *root = new FastTree;
+    ZeTree *root = new ZeTree;
     root->right = NULL;
     root->left = NULL;
     root->value = NULL;
@@ -394,7 +427,7 @@ FastTree* TreeCreator::createFastTree(int debut, int fin)
                     if(op == PTHO)
                     {
                         delete root;
-                        root = createFastTree(closingPthPos, openingPthPos);
+                        root = createZeTree(closingPthPos, openingPthPos);
                         return root;
                     }
                 }
@@ -402,9 +435,9 @@ FastTree* TreeCreator::createFastTree(int debut, int fin)
             else if(pths == 0 && decompPriorites[i] == op)
             {
                 root->type = decompTypes[i];
-                root->right = createFastTree(debut, i + 1);
+                root->right = createZeTree(debut, i + 1);
                 if(op != FUNC)
-                    root->left = createFastTree(i - 1, fin);
+                    root->left = createZeTree(i - 1, fin);
                 return root;
             }
         }
@@ -412,12 +445,108 @@ FastTree* TreeCreator::createFastTree(int debut, int fin)
     return root;
 }
 
-void TreeCreator::deleteFastTree(FastTree *tree)
+void ZeExpression::deleteZeTree(ZeTree *tree)
 {
     delete tree->value;
     if(tree->left != NULL)
-        deleteFastTree(tree->left);
+        deleteZeTree(tree->left);
     if(tree->right != NULL)
-        deleteFastTree(tree->right);
+        deleteZeTree(tree->right);
     delete tree;
+}
+
+void ZeExpression::setAdditionnalVarsValues(QList<double> values)
+{
+    additionnalVarsValues = values;
+}
+
+void ZeExpression::setK(double val)
+{
+    k = val;
+}
+
+bool ZeExpression::checkCalledFuncsValidity(QString expr)
+{
+    QList<int> calledFuncs = treeCreator.getCalledFuncs(expr);
+
+    if(funcCalculatorsList.isEmpty())
+    {
+        return calledFuncs.isEmpty();
+    }
+    else
+    {
+        bool validity = true;
+
+        for(int i = 0; i < calledFuncs.size() && validity ; i++)
+            validity = funcCalculatorsList[calledFuncs[i]]->isFuncValid();
+
+        return validity;
+    }
+
+    return false;
+}
+
+void ZeExpression::addRefFuncsPointers()
+{
+    refFuncs << acos << asin << atan << cos << sin << tan << sqrt
+             << log10 << log << fabs << exp << floor << ceil << cosh
+             << sinh << tanh << tenPower << tenPower << acosh << asinh
+             << atanh << erf << erfc << tgamma << tgamma << cosh
+             << sinh << tanh << acosh << asinh << atanh;
+}
+
+double ZeExpression::calculateFromTree(ZeTree *tree, double x)
+{
+    if(tree->type == NUMBER )
+    {
+        return *tree->value;
+    }
+    else if(tree->type == PAR_K)
+    {
+        return k;
+    }
+    else if(tree->type == VAR_X || tree->type == VAR_T)
+    {
+        return x;
+    }
+    else if(tree->type == PLUS)
+    {
+        return calculateFromTree(tree->left, x) + calculateFromTree(tree->right, x);
+    }
+    else if(tree->type == MINUS)
+    {
+        return calculateFromTree(tree->left, x) - calculateFromTree(tree->right, x);
+    }
+    else if(tree->type == MULTIPLY)
+    {
+        return calculateFromTree(tree->left, x) * calculateFromTree(tree->right, x);
+    }
+    else if(tree->type == DIVIDE)
+    {
+        return calculateFromTree(tree->left, x) / calculateFromTree(tree->right, x);
+    }
+    else if(tree->type == POW)
+    {
+        return pow(calculateFromTree(tree->left, x), calculateFromTree(tree->right, x));
+    }
+    else if(REF_FUNC_START < tree->type && tree->type < REF_FUNC_END)
+    {
+        return (*refFuncs[tree->type - REF_FUNC_START - 1])(calculateFromTree(tree->right, x));
+    }
+    else if(FUNC_START < tree->type && tree->type < FUNC_END)
+    {
+        int id = tree->type - FUNC_START - 1;
+        return funcCalculatorsList[id]->getFuncValue(calculateFromTree(tree->right, x), k);
+    }
+    else if(DERIV_START < tree->type && tree->type < DERIV_END)
+    {
+        int id = tree->type - DERIV_START - 1;
+        return funcCalculatorsList[id]->getDerivativeValue(calculateFromTree(tree->right, x), k);
+    }
+    else if(tree->type >= ADDITIONNAL_VARS_START)
+    {
+        return additionnalVarsValues.at(tree->type - ADDITIONNAL_VARS_START);
+    }
+
+    else return NAN;
 }

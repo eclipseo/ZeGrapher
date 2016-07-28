@@ -91,14 +91,6 @@ struct Rectangle
     Point pt1, pt2;
 };
 
-struct FastTree
-{
-    short type;
-    double *value;
-    FastTree *left;
-    FastTree *right;
-};
-
 struct SettingsVals
 {
     QColor axesColor;

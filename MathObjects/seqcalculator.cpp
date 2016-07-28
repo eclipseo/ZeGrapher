@@ -76,7 +76,7 @@ bool SeqCalculator::validateSeqExpr(QString expr)
     seqValues.clear();
 
     if(seqTree != NULL)
-        treeCreator.deleteFastTree(seqTree);
+        treeCreator.deleteZeTree(seqTree);
 
     seqTree = treeCreator.getTreeFromExpr(expr, isExprValidated);
 
@@ -350,7 +350,7 @@ bool SeqCalculator::calculateAndSaveFirstValuesTrees()
     return true;
 }
 
-double SeqCalculator::calculateFromTree(FastTree *tree, double x, bool &ok)
+double SeqCalculator::calculateFromTree(ZeTree *tree, double x, bool &ok)
 {
     if(!ok)
         return NAN;
@@ -539,7 +539,7 @@ bool SeqCalculator::validateSeqFirstValsTrees()
 
     firstValsExpr.remove(" ");
     QString str;
-    FastTree *tree;
+    ZeTree *tree;
 
     bool ok = true;
 
@@ -563,7 +563,7 @@ void SeqCalculator::deleteFirstValsTrees()
 {
     for(int i = 0; i < firstValsTrees.size() ; i++)
     {
-        firstValsTreeCreator.deleteFastTree(firstValsTrees[i]);
+        firstValsTreeCreator.deleteZeTree(firstValsTrees[i]);
     }
 
     firstValsTrees.clear();

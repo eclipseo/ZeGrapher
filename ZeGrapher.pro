@@ -52,18 +52,15 @@ SOURCES += \
     DataPlot/datatable.cpp \
     DataPlot/columnselectorwidget.cpp \
     DataPlot/columnactionswidget.cpp \
-    Calculus/treecreator.cpp \
-    Calculus/seqcalculator.cpp \
-    Calculus/funcvaluessaver.cpp \
-    Calculus/funccalculator.cpp \
-    Calculus/exprcalculator.cpp \
-    Calculus/colorsaver.cpp \
+    MathObjects/seqcalculator.cpp \
+    MathObjects/funcvaluessaver.cpp \
+    MathObjects/colorsaver.cpp \
     Widgets/datawidget.cpp \
     DataPlot/csvhandler.cpp \
-    Calculus/polynomial.cpp \
-    Calculus/polynomialregression.cpp \
-    Calculus/regression.cpp \
-    Calculus/regressionvaluessaver.cpp \
+    MathObjects/polynomial.cpp \
+    MathObjects/polynomialregression.cpp \
+    MathObjects/regression.cpp \
+    MathObjects/regressionvaluessaver.cpp \
     DataPlot/modelchoicewidget.cpp \
     DataPlot/modelwidget.cpp \
     DataPlot/polynomialmodelwidget.cpp \
@@ -73,7 +70,11 @@ SOURCES += \
     Windows/settings.cpp \
     Windows/values.cpp \
     Windows/updatecheck.cpp \
-    Windows/mainwindow.cpp
+    Windows/mainwindow.cpp \
+    MathObjects/ZeExpression.cpp \
+    MathObjects/ZeSet.cpp \
+    MathObjects/ZeFunction.cpp \
+    MathObjects/ZeConstant.cpp
 
 HEADERS  += \
     Structures.h \
@@ -108,20 +109,17 @@ HEADERS  += \
     DataPlot/datatable.h \
     DataPlot/columnselectorwidget.h \
     DataPlot/columnactionswidget.h \
-    Calculus/treecreator.h \
-    Calculus/seqcolorssaver.h \
-    Calculus/seqcalculator.h \
-    Calculus/funcvaluessaver.h \
-    Calculus/funccalculator.h \
-    Calculus/exprcalculator.h \
-    Calculus/colorsaver.h \
-    Calculus/calculusdefines.h \
+    MathObjects/seqcolorssaver.h \
+    MathObjects/seqcalculator.h \
+    MathObjects/funcvaluessaver.h \
+    MathObjects/colorsaver.h \
+    MathObjects/MathObjectsdefines.h \
     Widgets/datawidget.h \
     DataPlot/csvhandler.h \
-    Calculus/polynomial.h \
-    Calculus/polynomialregression.h \
-    Calculus/regression.h \
-    Calculus/regressionvaluessaver.h \
+    MathObjects/polynomial.h \
+    MathObjects/polynomialregression.h \
+    MathObjects/regression.h \
+    MathObjects/regressionvaluessaver.h \
     DataPlot/modelchoicewidget.h \
     DataPlot/modelwidget.h \
     DataPlot/polynomialmodelwidget.h \
@@ -131,7 +129,11 @@ HEADERS  += \
     Windows/settings.h \
     Windows/values.h \
     Windows/updatecheck.h \
-    Windows/mainwindow.h
+    Windows/mainwindow.h \
+    MathObjects/ZeExpression.h \
+    MathObjects/ZeSet.h \
+    MathObjects/ZeFunction.h \
+    MathObjects/ZeConstant.h
 
 
 FORMS    += \

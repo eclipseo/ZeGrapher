@@ -463,7 +463,7 @@ void ParEqWidget::checkXline()
     if(xExpr != xLine->text())
     {
         if(xTree != NULL)
-            treeCreator.deleteFastTree(xTree);
+            treeCreator.deleteZeTree(xTree);
 
         xTree = treeCreator.getTreeFromExpr(xLine->text(), isXExprGood);
 
@@ -481,7 +481,7 @@ void ParEqWidget::checkYline()
     if(yExpr != yLine->text())
     {
         if(yTree != NULL)
-            treeCreator.deleteFastTree(yTree);
+            treeCreator.deleteZeTree(yTree);
 
         yTree = treeCreator.getTreeFromExpr(yLine->text(), isYExprGood);
 
@@ -770,8 +770,8 @@ void ParEqWidget::playButtonClicked()
 ParEqWidget::~ParEqWidget()
 {
     if(xTree != NULL)
-        treeCreator.deleteFastTree(xTree);
+        treeCreator.deleteZeTree(xTree);
     if(yTree != NULL)
-        treeCreator.deleteFastTree(yTree);
+        treeCreator.deleteZeTree(yTree);
 }
 

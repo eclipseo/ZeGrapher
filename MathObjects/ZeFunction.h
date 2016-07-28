@@ -24,31 +24,23 @@
 #define FUNCCALCULATOR_H
 
 #include "Structures.h"
-#include "treecreator.h"
 #include "colorsaver.h"
 
-class FuncCalculator : public QObject
+#include "./ZeExpression.h"
+
+class ZeFunction : public QObject
 {
     Q_OBJECT
 
 public:
-    FuncCalculator(int id, QString funcName, QLabel *errorLabel);
+    ZeFunction(QString funcName, QString mainVarName, ZeSet *mathObjects);
 
-    void setFuncsPointers(QList<FuncCalculator*> otherFuncs);
     void setIntegrationPointsList(QList<Point> list);
-    void setParametric(bool state);
-    void setParametricRange(Range range);
-    void setIntegrationPointsValidity(bool state);
-    void setInvalid();
-
-    void setColorSaver(ColorSaver *colsaver);
-
-    ColorSaver* getColorSaver();
 
     bool checkFuncCallingInclusions();
 
-    double getAntiderivativeValue(double b, Point A, double k_val = 0);
-    double getFuncValue(double x, double kValue = 0);
+    double evalAntiderivative(double b, Point A, double k_val = 0);
+    double eval(QHash<QString, double> vals);
     double getDerivativeValue(double x, double k_val = 0);
 
 
@@ -64,16 +56,16 @@ public slots:
     void setDrawState(bool draw);
 
 protected:
-    double calculateFromTree(FastTree *tree, double x);
+    double calculateFromTree(ZeTree *tree, double x);
     void addRefFuncsPointers();     
 
     int funcNum;
     double k;
     bool isExprValidated, isParametric, areCalledFuncsGood, areIntegrationPointsGood, drawState, callLock;
     TreeCreator treeCreator;
-    FastTree *funcTree;
+    ZeTree *funcTree;
     QString expression, name;
-    QList<FuncCalculator*> funcCalculatorsList;
+    QList<ZeFunction*> funcCalculatorsList;
     Range kRange;    
     ColorSaver *colorSaver;
     QLabel *errorMessageLabel;

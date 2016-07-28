@@ -385,7 +385,7 @@ void DataTable::fillColumnFromRange(int col, Range range)
 bool DataTable::fillColumnFromExpr(int col, QString expr)
 {
     bool ok = false;
-    FastTree *tree = treeCreator->getTreeFromExpr(expr, ok, columnNames);
+    ZeTree *tree = treeCreator->getTreeFromExpr(expr, ok, columnNames);
 
     if(!ok)
         return false;
@@ -428,7 +428,7 @@ bool DataTable::fillColumnFromExpr(int col, QString expr)
     }
 
     disableChecking = false;
-    treeCreator->deleteFastTree(tree);
+    treeCreator->deleteZeTree(tree);
 
     emit valEdited(row, col);
     return true;

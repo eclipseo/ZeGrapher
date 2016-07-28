@@ -28,7 +28,7 @@
 
 #include "Structures.h"
 #include "treecreator.h"
-#include "funccalculator.h"
+#include "ZeFunction.h"
 #include "colorsaver.h"
 
 class SeqCalculator : public QObject
@@ -48,7 +48,7 @@ public:
     bool isSeqParametric();
     bool getDrawState();
 
-    void setFuncsPointers(QList<FuncCalculator*> otherFuncs);
+    void setFuncsPointers(QList<ZeFunction*> otherFuncs);
     void setSeqsPointers(QList<SeqCalculator*> otherSeqs);   
     void setParametricInfo(bool parametric, Range parRange);
     void setInvalid();
@@ -79,7 +79,7 @@ protected:
     bool calculateAndSaveFirstValuesTrees();
     void updateSeqValuesSize();
 
-    double calculateFromTree(FastTree *tree, double n, bool &ok);
+    double calculateFromTree(ZeTree *tree, double n, bool &ok);
 
     bool validateSeqFirstValsTrees();
     bool saveSeqValues(double nMax);
@@ -95,14 +95,14 @@ protected:
     ColorSaver *colorSaver;
     Range kRange;
     TreeCreator treeCreator, firstValsTreeCreator;
-    FastTree *seqTree;
+    ZeTree *seqTree;
     QString expression, firstValsExpr, seqName;
     QStringList seqsNames;
-    QList<FuncCalculator*> funcCalculatorsList;
+    QList<ZeFunction*> funcCalculatorsList;
     QList<SeqCalculator*> seqCalculatorsList;
     QList<double (*)(double)> refFuncs;
 
-    QList<FastTree*> firstValsTrees;
+    QList<ZeTree*> firstValsTrees;
     QList< QList<double> > seqValues;    
 };
 

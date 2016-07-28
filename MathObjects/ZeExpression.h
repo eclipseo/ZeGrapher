@@ -19,10 +19,20 @@
 ****************************************************************************/
 
 
+#ifndef EXPRCALCULATOR_H
+#define EXPRCALCULATOR_H
 
+#include "Structures.h"
 
-#ifndef CALCULUSDEFINES_H
-#define CALCULUSDEFINES_H
+struct ZeTree
+{
+    short type;
+    QString name;
+    double value;
+    ZeTree *left;
+    ZeTree *right;
+};
+
 
 enum {
     OP_LOW,
@@ -132,4 +142,61 @@ enum {
 
 };
 
-#endif // CALCULUSDEFINES_H
+class ZeSet;
+
+class ZeFunction;
+
+class ZeExpression
+{
+public:
+
+    explicit ZeExpression(ZeSet *set = nullptr);
+    explicit ZeExpression(QString expr, ZeSet *set = nullptr);
+
+    void setExpression(QString expr);
+    void setMathObjectsSet(ZeSet *set);
+    bool isValid();
+    QString getErrorMessage();
+
+    double eval();
+
+
+
+protected:
+
+    QList<int> getCalledFuncs(QString expr);
+    QList<int> getCalledSeqs(QString expr);
+    void deleteZeTree(ZeTree *tree);    
+
+    double calculateExpression(QString expr, bool &ok, double k_val = 0);
+
+    bool checkCalledFuncsValidity(QString expr);
+
+    double calculateFromTree(ZeTree *tree, double x = 0);
+
+    ZeTree* getTreeFromExpr(QString expr, bool &ok, QStringList additionnalVars = QStringList());
+
+    QStringList splitExpression(QString expr);
+
+    void checkExpression();
+    QStringList splitExpression(QString expr);
+    void insertMultiplySigns(QString &formula);
+    void refreshAuthorizedVars();
+    ZeTree* createZeTree(int debut, int fin);
+
+
+
+    QStringList refFunctions, functions, sequences, antiderivatives, derivatives, constants, vars, customVars;
+    QList<double> constantsVals;
+
+    QList<QChar> operators;
+    QList<short> decompPriorites, decompTypes, operatorsPriority, operatorsTypes;
+    QList<double> decompValues;
+
+    bool valid;
+    QString expression;
+    ZeSet *mathObjects;
+    ZeTree *currentTree;
+};
+
+#endif // EXPRCALCULATOR_H

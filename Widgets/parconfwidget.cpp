@@ -131,7 +131,7 @@ void ParConfWidget::checkExprForK(QString expr)
     kState = is_k_present;
 }
 
-void ParConfWidget::updateTreeWithExpr(QString &lastExpr, QLineEdit *line, FastTree **treePointerAdress, bool &isExprGood)
+void ParConfWidget::updateTreeWithExpr(QString &lastExpr, QLineEdit *line, ZeTree **treePointerAdress, bool &isExprGood)
 {
     if(lastExpr != line->text())
     {
@@ -141,7 +141,7 @@ void ParConfWidget::updateTreeWithExpr(QString &lastExpr, QLineEdit *line, FastT
         if(isExprGood)
         {
             if(*treePointerAdress != NULL)
-                treeCreator.deleteFastTree(*treePointerAdress);
+                treeCreator.deleteZeTree(*treePointerAdress);
 
             *treePointerAdress = treeCreator.getTreeFromExpr(lastExpr, isExprGood);
         }
@@ -216,11 +216,11 @@ Range ParConfWidget::getRange(double k)
 ParConfWidget::~ParConfWidget()
 {
     if(stepTree != NULL)
-        treeCreator.deleteFastTree(stepTree);
+        treeCreator.deleteZeTree(stepTree);
     if(endTree != NULL)
-        treeCreator.deleteFastTree(endTree);
+        treeCreator.deleteZeTree(endTree);
     if(startTree != NULL)
-        treeCreator.deleteFastTree(startTree);
+        treeCreator.deleteZeTree(startTree);
 
     delete calculator;
 }

@@ -61,13 +61,13 @@ protected slots:
 
 protected:
     void addConfWidgets(QHBoxLayout *layout);
-    void updateTreeWithExpr(QString &lastExpr, QLineEdit *line, FastTree **treePointerAdress, bool &isExprGood);
+    void updateTreeWithExpr(QString &lastExpr, QLineEdit *line, ZeTree **treePointerAdress, bool &isExprGood);
 
     QLineEdit *start, *step, *end;
     QCheckBox *animate, *keepTracks;
     TreeCreator treeCreator;
     ExprCalculator *calculator;
-    FastTree *startTree, *stepTree, *endTree;
+    ZeTree *startTree, *stepTree, *endTree;
     QString lastStartExpr, lastStepExpr, lastEndExpr;
     QPalette validPalette, invalidPalette, neutralPalette;
     Range defaultRange;

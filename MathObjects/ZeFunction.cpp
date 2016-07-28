@@ -19,14 +19,14 @@
 ****************************************************************************/
 
 
-#include "Calculus/funccalculator.h"
+#include "MathObjects/ZeFunction.h"
 
 static double tenPower(double x)
 {
      return pow(10, x);
 }
 
-FuncCalculator::FuncCalculator(int id, QString funcName, QLabel *errorLabel) : treeCreator(FUNCTION)
+ZeFunction::ZeFunction(int id, QString funcName, QLabel *errorLabel) : treeCreator(FUNCTION)
 {
     errorMessageLabel = errorLabel;
     funcTree = NULL;
@@ -48,22 +48,22 @@ FuncCalculator::FuncCalculator(int id, QString funcName, QLabel *errorLabel) : t
     }
 }
 
-void FuncCalculator::setColorSaver(ColorSaver *colsaver)
+void ZeFunction::setColorSaver(ColorSaver *colsaver)
 {
     colorSaver = colsaver;
 }
 
-void FuncCalculator::setIntegrationPointsList(QList<Point> list)
+void ZeFunction::setIntegrationPointsList(QList<Point> list)
 {
     integrationPoints = list;
 }
 
-ColorSaver* FuncCalculator::getColorSaver()
+ColorSaver* ZeFunction::getColorSaver()
 {
     return colorSaver;
 }
 
-void FuncCalculator::addRefFuncsPointers()
+void ZeFunction::addRefFuncsPointers()
 {
     refFuncs << acos << asin << atan << cos << sin << tan << sqrt
              << log10 << log << fabs << exp << floor << ceil << cosh
@@ -72,17 +72,17 @@ void FuncCalculator::addRefFuncsPointers()
              << sinh << tanh << acosh << asinh << atanh; //tenPower must figure two times for e and E
 }
 
-bool FuncCalculator::getDrawState()
+bool ZeFunction::getDrawState()
 {
     return drawState && isFuncValid();
 }
 
-bool FuncCalculator::validateExpression(QString expr)
+bool ZeFunction::validateExpression(QString expr)
 {   
     if(expression != expr)
     {
         if(funcTree != NULL)
-            treeCreator.deleteFastTree(funcTree);
+            treeCreator.deleteZeTree(funcTree);
 
         funcTree = treeCreator.getTreeFromExpr(expr, isExprValidated);
         expression = expr;
@@ -93,7 +93,7 @@ bool FuncCalculator::validateExpression(QString expr)
     return isExprValidated;
 }
 
-void FuncCalculator::setFuncsPointers(QList<FuncCalculator*> otherFuncs)
+void ZeFunction::setFuncsPointers(QList<ZeFunction*> otherFuncs)
 {
     funcCalculatorsList = otherFuncs;
 
@@ -113,7 +113,7 @@ int int_pow(int a, int b)
     return a;
 }
 
-double FuncCalculator::getAntiderivativeValue(double b, Point A, double k_val)
+double ZeFunction::getAntiderivativeValue(double b, Point A, double k_val)
 {   
     double a = A.x, fa, fb, hn, result, powResult, diff, condition;
 
@@ -166,18 +166,18 @@ double FuncCalculator::getAntiderivativeValue(double b, Point A, double k_val)
 
 }
 
-double FuncCalculator::getFuncValue(double x, double kValue)
+double ZeFunction::getFuncValue(double x, double kValue)
 {    
     k = kValue;
     return calculateFromTree(funcTree, x);
 }
 
-void FuncCalculator::setDrawState(bool draw)
+void ZeFunction::setDrawState(bool draw)
 {
     drawState = draw;
 }
 
-double FuncCalculator::getDerivativeValue(double x, double k_val)
+double ZeFunction::getDerivativeValue(double x, double k_val)
 {
     k = k_val;
     double y1, y2, y3, y4, a;
@@ -191,12 +191,12 @@ double FuncCalculator::getDerivativeValue(double x, double k_val)
     return a;
 }
 
-void FuncCalculator::setIntegrationPointsValidity(bool state)
+void ZeFunction::setIntegrationPointsValidity(bool state)
 {
     areIntegrationPointsGood = state;
 }
 
-bool FuncCalculator::checkFuncCallingInclusions()
+bool ZeFunction::checkFuncCallingInclusions()
 {
     if(!isExprValidated || !areIntegrationPointsGood)
         return false;
@@ -228,42 +228,42 @@ bool FuncCalculator::checkFuncCallingInclusions()
 
 }
 
-void FuncCalculator::setParametric(bool state)
+void ZeFunction::setParametric(bool state)
 {
     isParametric = state;
 }
 
-bool FuncCalculator::isFuncParametric()
+bool ZeFunction::isFuncParametric()
 {
     return isParametric;
 }
 
-bool FuncCalculator::isFuncValid()
+bool ZeFunction::isFuncValid()
 {
     return isExprValidated && areCalledFuncsGood && areIntegrationPointsGood;
 }
 
-void FuncCalculator::setInvalid()
+void ZeFunction::setInvalid()
 {
     isExprValidated = false;
 }
 
-Range FuncCalculator::getParametricRange()
+Range ZeFunction::getParametricRange()
 {
     return kRange;
 }
 
-void FuncCalculator::setParametricRange(Range range)
+void ZeFunction::setParametricRange(Range range)
 {
     kRange = range;
 }
 
-bool FuncCalculator::canBeCalled()
+bool ZeFunction::canBeCalled()
 {
     return isExprValidated && areIntegrationPointsGood && areCalledFuncsGood && !callLock;
 }
 
-double FuncCalculator::calculateFromTree(FastTree *tree, double x)
+double ZeFunction::calculateFromTree(ZeTree *tree, double x)
 {
     if(tree->type == NUMBER )
     {

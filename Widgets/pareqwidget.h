@@ -133,7 +133,7 @@ protected:
     QList<FuncCalculator*> funcCalcs;
     QString xExpr, yExpr;
     Range tRange, kRange;
-    FastTree *xTree, *yTree;
+    ZeTree *xTree, *yTree;
 
 
 };
