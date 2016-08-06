@@ -26,7 +26,7 @@ static double tenPower(double x)
      return pow(10, x);
 }
 
-ZeFunction::ZeFunction(int id, QString funcName, QLabel *errorLabel) : treeCreator(FUNCTION)
+ZeFunction::ZeFunction()
 {
     errorMessageLabel = errorLabel;
     funcTree = NULL;

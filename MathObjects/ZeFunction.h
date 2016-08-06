@@ -33,7 +33,8 @@ class ZeFunction : public QObject
     Q_OBJECT
 
 public:
-    ZeFunction(QString funcName, QString mainVarName, ZeSet *mathObjects);
+    explicit ZeFunction(QString name, QStringList vars = QString("x"), ZeSet *mathObjects = nullptr);
+    explicit ZeFunction(QString name, QStringList vars = QString("x"), QObject *parent = nullptr);
 
     void setIntegrationPointsList(QList<Point> list);
 

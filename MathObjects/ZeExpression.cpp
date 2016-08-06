@@ -18,7 +18,8 @@
 **
 ****************************************************************************/
 
-#include "MathObjects/ZeExpression.h"
+#include "ZeExpression.h"
+#include "ZeSet.h"
 
 static double tenPower(double x)
 {
@@ -37,50 +38,48 @@ ZeExpression::ZeExpression(QString expr, ZeSet *set) : expression(expr), mathObj
 
 
 ZeExpression::ZeExpression(short callingObjectType)
-{
-    funcType = callingObjectType;
-
-    refFunctions << "acos" << "asin" << "atan" << "cos" << "sin" << "tan" << "sqrt"
-                 << "log" << "ln" << "abs" << "exp" << "floor" << "ceil" << "cosh"
-                 << "sinh" << "tanh" << "E" << "e" << "acosh" << "asinh" << "atanh"
-                 << "erf" << "erfc" << "gamma" << "Γ" << "ch" << "sh" << "th" << "ach"
-                 << "ash" << "ath";
-    functions << "f" << "g" << "h" << "p" << "r" << "m";
-    antiderivatives << "F" << "G" << "H" << "P" << "R" << "M";
-    derivatives << "f'" << "g'" << "h'" << "p'" << "r'" << "m'";
-    sequences << "u" << "v" << "l" << "w" << "q" << "z";
-
-    constants << "π" << "pi" << "Pi" << "PI";
-    constantsVals << M_PI << M_PI << M_PI << M_PI ;
-
-    vars << "x" << "t" << "n" << "k";
-    authorizedVars << false << false << false << false;
-
-    operators << '^' << '*' << '/' << '+' << '-';
+{    
     operatorsPriority << POW << OP_HIGH << OP_HIGH << OP_LOW << OP_LOW;
     operatorsTypes << POW << MULTIPLY << DIVIDE << PLUS << MINUS;
 
-    refreshAuthorizedVars();
 }
 
-void ZeExpression::refreshAuthorizedVars()
+void ZeExpression::addStandardFuncs()
 {
-    if(funcType == FUNCTION)
-    {
-        authorizedVars[0] = authorizedVars[3] = true; // x and k
-    }
-    else if(funcType == SEQUENCE)
-    {
-        authorizedVars[2] = authorizedVars[3] = true; // k and n
-    }
-    else if(funcType == PARAMETRIC_EQ)
-    {
-        authorizedVars[1] = authorizedVars[3] = true; // k and t
-    }
-    else if(funcType == DATA_TABLE_EXPR)
-    {
-        authorizedVars[0] = true; // only x, which is the old cell value.
-    }
+    standardFunctions.insert("acos", acos);
+    standardFunctions.insert("asin", asin);
+    standardFunctions.insert("atan", atan);
+
+    standardFunctions.insert("cos", acos);
+    standardFunctions.insert("sin", sin);
+    standardFunctions.insert("tan", tan);
+
+    standardFunctions.insert("cosh", cosh);
+    standardFunctions.insert("ch", cosh);
+    standardFunctions.insert("sinh", sinh);
+    standardFunctions.insert("sh", sinh);
+    standardFunctions.insert("tanh", tanh);
+    standardFunctions.insert("th", tanh);
+
+    standardFunctions.insert("acosh", acosh);
+    standardFunctions.insert("ach", acosh);
+    standardFunctions.insert("asinh", asinh);
+    standardFunctions.insert("ash", asinh);
+    standardFunctions.insert("atanh", atanh);
+    standardFunctions.insert("ath", atanh);
+
+    standardFunctions.insert("sqrt", sqrt);
+    standardFunctions.insert("log", log);
+    standardFunctions.insert("ln", ln);
+    standardFunctions.insert("abs", abs);
+    standardFunctions.insert("exp", exp);
+    standardFunctions.insert("floor", floor);
+    standardFunctions.insert("ceil", ceil);
+    standardFunctions.insert("erf", erf);
+    standardFunctions.insert("erfc", erfc);
+    standardFunctions.insert("gamma", gamma);
+    standardFunctions.insert("Γ", gamma);
+
 }
 
 ZeTree* ZeExpression::getTreeFromExpr(QString expr, bool &ok, QStringList additionnalVars)
@@ -98,372 +97,366 @@ ZeTree* ZeExpression::getTreeFromExpr(QString expr, bool &ok, QStringList additi
     return tree;
 }
 
-void ZeExpression::allow_k(bool state)
-{
-    authorizedVars[3] = state;
-}
-
-void ZeExpression::insertMultiplySigns(QString &formula)
-{
-    for(int i = 0 ; i < formula.size()-1; i++)
-    {
-        if((formula[i].isDigit() && formula[i+1].isLetter()) ||
-                (formula[i].isLetter() && formula[i+1].isDigit()) ||
-                (formula[i].isDigit() && formula[i+1] == '(') ||
-                (formula[i] == ')' && formula[i+1] == '(') ||
-                (formula[i] == ')' && (formula[i+1].isDigit() || formula[i+1].isLetter())) ||
-                (i != 0 && !formula[i-1].isLetter() && vars.contains(QString(formula[i])) && formula[i+1] == '('))
-        {
-            formula.insert(i+1, QString("*"));
-            i++;
-        }
-        else if(formula[i] == '-' && formula[i+1].isLetter())
-        {
-            formula.insert(i+1, QString("1*"));
-            i++;
-        }
-    }
-}
-
-QList<int> ZeExpression::getCalledFuncs(QString expr)
-{
-    QList<int> calledFuncs;
-
-    if(expr.isEmpty())
-        return calledFuncs;
-
-    int i = 0, letterStart;
-
-    QStringList calledObjects;
-
-    while(i < expr.size())
-    {
-        if(expr[i].isLetter())
-        {
-            letterStart = i;
-
-            while(expr[i].isLetter() && i < expr.size())
-                i++;
-
-            calledObjects << expr.mid(letterStart, i - letterStart);
-        }
-        i++;
-    }
-
-    for(i = 0 ; i < functions.size() ; i++)
-    {
-        if((calledObjects.contains(antiderivatives[i]) || calledObjects.contains(functions[i]) || calledObjects.contains(derivatives[i]))
-                && !calledFuncs.contains(i))
-            calledFuncs << i;
-    }
-
-    return calledFuncs;
-}
-
-QList<int> ZeExpression::getCalledSeqs(QString expr)
-{
-    QList<int> calledSeqs;
-
-    if(expr.isEmpty())
-        return calledSeqs;
-
-    int i = 0, letterStart;
-
-    QStringList calledObjects;
-
-    while(i < expr.size())
-    {
-        if(expr[i].isLetter())
-        {
-            letterStart = i;
-
-            while(expr[i].isLetter() && i < expr.size())
-                i++;
-
-            calledObjects << expr.mid(letterStart, i - letterStart);
-        }
-        i++;
-    }
-
-    for(i = 0 ; i < sequences.size() ; i++)
-    {
-        if(calledObjects.contains(sequences[i]) && !calledSeqs.contains(i))
-            calledSeqs << i;
-    }
-
-    return calledSeqs;
-}
-
 QStringList ZeExpression::splitExpression(QString expr)
 {
-    QList<QChar> ops << '+' << '-' << '/' << '*' << '^' << '(' << ')';
+    QList<QChar> ops = QList<QChar>() << '+' << '-' << '/' << '*' << '^' << '(' << ')';
     QStringList split;
 
-    int start = 0;
+    int start = 0, end = 0;
 
-    for(int end = 0 ; i < expr.size() ; i++)
+    QChar c1, c2, c3, c4;
+    bool skipOperator = false;
+
+    for(end = 0 ; end < expr.size() ; end++)
     {
-        if(ops.contains(expr[i]))
+        c1 = (end != 0) ? QChar(expr[end-1]) : '\0' ;
+        c2 = expr[end];
+        c3 = (end != expr.size()-1) ? QChar(expr[end+1]) : '\0';
+        c4 = (end != expr.size()-2) ? QChar(expr[end+2]) : '\0';
+
+        if( (c1.isNull() || c1 == '(') && (c2 == '+' || c2 == '-') && !c3.isNull())
         {
-            split << expr.mid(start, end - start + 1);
-            start = end + 1;
+            if(!c3.isDigit())
+                expr.insert(end+1, "1*"); // add a multiply sign when we have a similar entry than the following: "3(-x)" -> "3(-1*x)"
+            else skipOperator = true; // the + or - sign we'll meet is not an operation and is part of a number, ex: "-3.3e+3"
+        }
+
+        if(c1.isDigit() && (c2 == 'E' || c2 == 'e') && (c3 == '+' || c3 == '-') && c4.isDigit())
+        {
+            skipOperator = true; // the + or - sign we'll meet is not an operation and is part of a number, ex: "-3.3e+3"
+        }
+        else if(ops.contains(expr[end]))
+        {
+            if(!skipOperator)
+            {
+                if(end - start != 0)
+                    split << expr.mid(start, end - start);
+
+                split << QString(expr[end]);
+                start = end + 1;
+            }
+            else skipOperator = false;
+        }
+    }
+
+    if(end - start != 0)
+        split << expr.mid(start, end - start);
+
+
+    bool ok = false;
+
+    // splitting again strings that are number * var ( or func). Ex: "3x" -> "3" "*" "x" or "3cos" -> "3" "*" "cos"
+    // we know when to split by looking for the longest left substring that QString can convert to a double.
+
+    for(int i = 0 ; i < split.size() ; i++)
+    {
+        QString str = split[i];
+        str.toDouble(&ok);
+
+        if(!ok)
+        {
+            if(str[0].isDigit() || (str.size() != 1 && (str[0] == '+' || str[0] == '-') && str[1].isDigit()))
+            {
+                int pos = str.size() + 1;
+                ok = false;
+
+                while(pos != 0 && !ok)
+                {
+                    pos--;
+                    str.mid(0, pos).toDouble(&ok);
+                }
+
+                if(ok)
+                {
+                    QString s1 = str.mid(0, pos), s2 = str.mid(pos, str.size() - pos);
+                    split[i] = s1;
+                    split.insert(i+1, "*");
+                    split.insert(i+2, s2);
+                }
+            }
         }
     }
 
     return split;
 }
 
-bool ZeExpression::check(QString formula)
+
+void ZeExpression::check()
 {
+    QString formula = expression;
+
     formula.remove(' ');
     formula.replace("²", "^2");
-    decompPriorites.clear();
-    decompTypes.clear();
-    decompValues.clear();
+    formula.replace(",", ".");
+
+    decomposition.clear();
 
     if(formula.isEmpty())
         return false;
 
     QStringList split = splitExpression(formula);
 
-    bool digit = true, openingParenthesis = true, numberSign = true, varOrFunc = true, canEnd = false,
-         ope = false, closingParenthesis = false;
+    decomposition.reserve(split.size());
 
     short pth = 0;
+    bool ok;
 
-    for(int i = 0 ; i < formula.size(); i++)
+    QStringList operators = QStringList() << "+" << "-" << "/" << "*" << "^";
+
+    QHash<QString, ElementType> operatorsPriority;
+    operatorsPriority.insert("+", ElementType::OP_LOW);
+    operatorsPriority.insert("-", ElementType::OP_LOW);
+    operatorsPriority.insert("*", ElementType::OP_HIGH);
+    operatorsPriority.insert("/", ElementType::OP_HIGH);
+    operatorsPriority.insert("^", ElementType::POW);
+
+    QHash<QString, NodeType> operatorsMap;
+    operatorsMap.insert("+", NodeType::PLUS);
+    operatorsMap.insert("-", NodeType::MINUS);
+    operatorsMap.insert("*", NodeType::MULTIPLY);
+    operatorsMap.insert("/", NodeType::DIVIDE);
+    operatorsMap.insert("^", NodeType::POW);
+
+
+    Element elem;
+    QString subExpr, member;
+
+    valid = true;
+
+
+    bool operation = true, varOrFuncOrNumber = true, canEnd = false, opth = false, cpth = false, isNumber = false;    
+    //booleans that specify which kind of member can be encountered for the expression to be syntaxically valid.
+
+    for(int i = 0 ; i < split.size() && valid ; i++)
     {
-        if((formula[i].isDigit() && digit) || ((formula[i]=='-' || formula[i] == '+') && numberSign && i+1 < formula.size() && formula[i+1].isDigit()))
-        {
-            bool ok = false, dejavirgule = false;
-            int numStart = i, numDigits = 1;
-            i++;
+        member = split[i];
 
-            while(!ok && i < formula.size())
+        member.toDouble(!isNumber);
+        if(isNumber)
+        {
+            elem.elemType = ElementType::NUMBER;
+            elem.nodeType = NodeType::NUMBER;
+            elem.val = member;
+            deconstruction << elem;
+
+            opth = varOrFuncOrNumber = false;
+            operation = cpth = canEnd = true;
+        }
+        else if(operators.contains(member))
+        {
+            if(operation)
             {
-                if(formula[i].isDigit())
-                    i++;
-                else if((formula[i]==',' || formula[i]=='.') && !dejavirgule)
+                elem.elemType = operatorsPriority.value(member);
+                elem.nodeType = operatorsMap.value(member);
+                elem.val = member;
+                deconstruction << elem;
+
+                opth = varOrFuncOrNumber = true;
+                operation = cpth = canEnd = false;
+            }
+            else
+            {
+                valid = false;
+                errorMessage = tr("Syntax error: unexpected placement of operator '") + member + "'\n" + subExpr + "<strong>" + member + "</strong>";
+            }
+        }
+        else if(member == "(")
+        {
+            if(opth)
+            {
+                pth++;
+
+                elem.elemType = ElementType::O_PTH;
+                elem.nodeType = NodeType::NONE;
+                elem.val.clear();
+                deconstruction << elem;
+
+                opth = varOrFuncOrNumber = true;
+                operation = cpth = canEnd = false;
+            }
+            else
+            {
+                valid = false;
+                errorMessage = tr("Syntax error: unexpected placement of '") + member + "'\n" + subExpr + "<strong>" + member + "</strong>";
+            }
+        }
+        else if(member == ")")
+        {
+            if(pth == 0)
+            {
+                valid = false;
+                errorMessage = tr("Syntax error: encountered a closing parenthesis without its open counterpart.") + "\n" + subExpr + "<strong>" + member + "</strong>";
+            }
+            else if(cpth)
+            {
+                pth--;
+
+                elem.elemType = ElementType::C_PTH;
+                elem.nodeType = NodeType::NONE;
+                elem.val.clear();
+                deconstruction << elem;
+
+                cpth = operation = canEnd = true;
+                varOrFuncOrNumber = opth = false;
+
+            }
+            else
+            {
+                valid = false;
+                errorMessage = tr("Syntax error: unexpected placement of '") + member + "'\n" + subExpr + "<strong>" + member + "</strong>";
+            }
+        }
+        else if(mathObjects->functionNames().contains(member) || mathObjects->derivativeNames().contains(member) || mathObjects->antiderivativeNames().contains(member))
+        {
+            if(varOrFuncOrNumber)
+            {
+                elem.elemType = ElementType::FUNC;
+                elem.val = member;
+                elem.val.clear();
+
+                if(mathObjects->functionNames().contains(member))
+                    elem.nodeType = NodeType::FUNC;
+                else if(mathObjects->derivativeNames())
+                    elem.nodeType = NodeType::DERIV_FUNC;
+                else elem.nodeType = NodeType::INTGR_FUNC;
+
+
+                deconstruction << elem;
+
+                opth = true;
+                cpth = operation = canEnd = varOrFuncOrNumber = false;
+
+                if(i == split.size()-1 || split[i+1] != "(")
                 {
-                    dejavirgule = true;
-                    i++;
+                    valid = false;
+                    errorMessage = tr("Syntax error: functions should be called with parenthesis. Ex: cos(x)") + "\n" + subExpr + "<strong>" + member + "</strong>";
                 }
-                else ok = true;
+            }
+            else
+            {
+                valid = false;
+                errorMessage = tr("Syntax error: unexpected placement of function '") + member + "'\n" + subExpr + "<strong>" + member + "</strong>";
+            }
+        }
+        else if(mathObjects->constantNames().contains(member) || varsAndVals.keys().contains(member))
+        {
+            if(varOrFuncOrNumber)
+            {
+                if(mathObjects->constantNames().contains(member))
+                {
+                    elem.elemType = ElementType::CONSTANT;
+                    elem.nodeType = NodeType::CONSTANT;
+                }
+                else
+                {
+                    elem.elemType = ElementType::VAR;
+                    elem.nodeType = NodeType::VAR;
+                }
+
+                elem.val = member;
+
+                deconstruction << elem;
+
+                opth = cpth = operation = canEnd = true;
+                varOrFuncOrNumber = false;
+            }
+            else
+            {
+                valid = false;
+                errorMessage = tr("Syntax error: unexpected placement of variable '") + member + "'\n" + subExpr + "<strong>" + member + "</strong>";
             }
 
-            numDigits = i - numStart;
-            i--;
-
-            QString number = formula.mid(numStart, numDigits);
-            decompPriorites << NUMBER;
-            decompTypes << NUMBER;
-            decompValues << number.toDouble(&ok);
-            if(!ok)
-                return false;
-
-            openingParenthesis = varOrFunc = numberSign = false;
-            digit = ope = closingParenthesis = canEnd = true;
         }
-        else if(formula[i].isLetter() && varOrFunc)
+        else
         {
-            int letterPosStart = i;
-
-            while(i+1 < formula.size() && (formula[i+1].isLetter() || formula[i+1] == '_')) { i++ ; }
-
-            if(i != formula.size() && formula[i+1] == '\'')
-                i++;
-
-            int numLetters = i - letterPosStart + 1;
-
-            QString name = formula.mid(letterPosStart, numLetters);
-
-            if(refFunctions.contains(name) || antiderivatives.contains(name) || functions.contains(name) ||
-                    derivatives.contains(name) || sequences.contains(name))
-            {
-                if(i+1 >= formula.size() || (formula[i+1] != '(' && formula[i] != 'e' && formula[i] != 'E'))
-                    return false;
-
-                decompPriorites << FUNC;
-                decompValues << 0.0;
-                openingParenthesis = true;
-                digit = ope = canEnd = closingParenthesis = varOrFunc = numberSign = false;
-
-                if(refFunctions.contains(name))
-                {
-                    decompTypes << refFunctions.indexOf(name) + REF_FUNC_START + 1;
-
-                    if(name == "E" || name == "e")
-                        digit = numberSign = openingParenthesis = true;
-                }
-
-                else if(antiderivatives.contains(name) && funcType == FUNCTION)
-                    decompTypes << antiderivatives.indexOf(name) + INTEGRATION_FUNC_START + 1;
-
-                else if(functions.contains(name))
-                    decompTypes << functions.indexOf(name) + FUNC_START + 1;
-
-                else if(derivatives.contains(name))
-                    decompTypes << derivatives.indexOf(name) + DERIV_START + 1;
-
-                else if(sequences.contains(name) && funcType == SEQUENCE)
-                    decompTypes << sequences.indexOf(name) + SEQUENCES_START + 1;
-
-                else return false;
-            }
-
-            else if(constants.contains(name) || customVars.contains(name) || vars.contains(name))
-            {
-                varOrFunc = numberSign = false;
-                openingParenthesis = digit = ope = closingParenthesis = canEnd = true;
-
-                if(customVars.contains(name)) /* customVars comes at first because of overriding policy, customvars come from dataplot, and user can redefine
-                                                n t or x or k */
-                {
-                    decompTypes << ADDITIONNAL_VARS_START + customVars.indexOf(name);
-                    decompPriorites << VAR;
-                    decompValues << customVars.indexOf(name);
-                }
-                else if(constants.contains(name))
-                {
-                    decompPriorites << NUMBER;
-                    decompTypes << NUMBER;
-                    decompValues << constantsVals[constants.indexOf(name)];
-                }
-                else if(vars.contains(name) && authorizedVars[vars.indexOf(name)])
-                {
-                    decompTypes << vars.indexOf(name) + VARS_START + 1;
-                    decompPriorites << VAR;
-                    decompValues << 0.0;
-                }
-
-                else return false;
-            }
-
-            else return false;
+            valid = false;
+            errorMessage = tr("Unrecognised member '") + member + "'\n" + subExpr + "<strong>" + member + "</strong>";
 
         }
-        else if(operators.contains(formula[i]) && ope)
-        {
-            short pos = operators.indexOf(formula[i]);
-
-            decompTypes << operatorsTypes[pos];
-            decompPriorites << operatorsPriority[pos];
-            decompValues << 0.0 ;
-
-            openingParenthesis = digit = varOrFunc = true;
-            ope = numberSign = closingParenthesis = canEnd = false;
-        }
-        else if(formula[i]=='(' && openingParenthesis)
-        {
-            pth++;
-
-            decompTypes << PTHO ;
-            decompPriorites << PTHO;
-            decompValues << 0.0 ;
-
-            numberSign = digit = varOrFunc = openingParenthesis = true;
-            ope = closingParenthesis = canEnd = false;
-        }
-        else if(formula[i]==')' && closingParenthesis && pth > 0)
-        {
-            pth--;
-
-            decompTypes << PTHF ;
-            decompPriorites << PTHF ;
-            decompValues << 0.0 ;
-
-            ope = closingParenthesis = canEnd = true;
-            digit = numberSign = openingParenthesis = varOrFunc = false;
-
-        }
-        else return false;
     }
 
-    return pth == 0 && canEnd;
+    valid = pth == 0 && canEnd;
 }
 
-ZeTree* ZeExpression::createZeTree(int debut, int fin)
+ZeTree* ZeExpression::createZeTree(QList<Element> split)
 {
-    ZeTree *root = new ZeTree;
-    root->right = NULL;
-    root->left = NULL;
-    root->value = NULL;
+    ZeTree *node = new ZeTree;
+    node->right = nullptr;
+    node->left = nullptr;
 
     short pths = 0, closingPthPos = 0, openingPthPos = 0;
     bool debutPthFerme = false;
 
-    if(debut == fin)
+    if(split.size() == 1)
     {
-        if(decompPriorites[debut] == NUMBER)
-        {
-            root->type = NUMBER;
-            root->value = new double;
-            *root->value = decompValues[debut];
-        }
-        else root->type = decompTypes[debut];
+        node->type = split.front().nodeType;
+        node->name = split.front().val;
 
-        return root;
+        if(split.front().elemType == ElementType::NUMBER)
+            node->value = split.front().val.toDouble();
+
+        return node;
     }
 
-    for(char op = 0; op < 5; op++)
+    QList<ElementType> priorities;
+    priorities << ElementType::OP_LOW << ElementType::OP_HIGH << ElementType::POW
+               << ElementType::FUNC << ElementType::O_PTH << ElementType::C_PTH;
+
+    Element elem;
+
+    for(ElementType type: priorities)
     {
-        for(short i = debut ; i >= fin ; i--)
+        for(int i = split.size()-1 ; i != -1 ; i--)
         {
-            if(decompPriorites[i] == PTHF)
+            elem = split[i];
+            pths--;
+
+            if(elem.elemType == ElementType::C_PTH)
             {
                 if(!debutPthFerme)
                 {
                     debutPthFerme = true;
-                    closingPthPos = i - 1;
-                }
-                pths--;
+                    closingPthPos = i;
+                }                
             }
-            else if(decompPriorites[i] == PTHO)
+            else if(elem.elemType == ElementType::O_PTH)
             {
                 pths++;
+
                 if(pths == 0)
                 {
-                    openingPthPos = i + 1;
-                    if(op == PTHO)
+                    openingPthPos = i;
+                    if(type == ElementType::O_PTH)
                     {
-                        delete root;
-                        root = createZeTree(closingPthPos, openingPthPos);
-                        return root;
+                        delete node;
+                        node = createZeTree(split.mid(openingPthPos+1, closingPthPos-1));
+                        return node;
                     }
                 }
             }
-            else if(pths == 0 && decompPriorites[i] == op)
+            else if(pths == 0 && elem.elemType == type)
             {
-                root->type = decompTypes[i];
-                root->right = createZeTree(debut, i + 1);
+                node->type = decompTypes[i];
+                node->right = createZeTree(split.mid(i + 1));
                 if(op != FUNC)
-                    root->left = createZeTree(i - 1, fin);
-                return root;
+                    node->left = createZeTree(split.mid(0, i));
+                return node;
             }
         }
     }
-    return root;
+    return node;
 }
 
 void ZeExpression::deleteZeTree(ZeTree *tree)
 {
     delete tree->value;
-    if(tree->left != NULL)
+    if(tree->left != nullptr)
         deleteZeTree(tree->left);
-    if(tree->right != NULL)
+    if(tree->right != nullptr)
         deleteZeTree(tree->right);
     delete tree;
 }
 
-void ZeExpression::setAdditionnalVarsValues(QList<double> values)
-{
-    additionnalVarsValues = values;
-}
-
-void ZeExpression::setK(double val)
-{
-    k = val;
-}
 
 bool ZeExpression::checkCalledFuncsValidity(QString expr)
 {
@@ -486,16 +479,8 @@ bool ZeExpression::checkCalledFuncsValidity(QString expr)
     return false;
 }
 
-void ZeExpression::addRefFuncsPointers()
-{
-    refFuncs << acos << asin << atan << cos << sin << tan << sqrt
-             << log10 << log << fabs << exp << floor << ceil << cosh
-             << sinh << tanh << tenPower << tenPower << acosh << asinh
-             << atanh << erf << erfc << tgamma << tgamma << cosh
-             << sinh << tanh << acosh << asinh << atanh;
-}
 
-double ZeExpression::calculateFromTree(ZeTree *tree, double x)
+double ZeExpression::calculateFromTree(ZeTree *tree, QHash<QString, double> vals)
 {
     if(tree->type == NUMBER )
     {
